@@ -1,0 +1,208 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nerium</title>
+</head>
+<body>
+  <link rel="stylesheet" type="text/css" href="css/background2.css">
+  <link rel="stylesheet" type="text/css" href="css/game.css">
+  <a href="index.html" target="index">
+    <img src="image/home.png" width="30" height="30" align="right">
+  </a>
+  <canvas width="1000" height="600" id="game"></canvas>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script>
+    var canvas = document.querySelector("#game");
+    var context = canvas.getContext("2d");
+
+    var backgroundImage = new Image();
+    backgroundImage.src = "image/newdelhi.png";
+
+    var backgroundImageEnd = new Image();
+    backgroundImageEnd.src = "image/disnewdelhi.png";
+
+    var mirimeImage1 = new Image();
+    var mirimeImage2 = new Image();
+    mirimeImage1.src = "image/mirime.png";
+    mirimeImage2.src = "image/mirime.png";
+
+    var virusImage1 = new Image();
+    var virusImage2 = new Image();
+    virusImage1.src = "image/virus1.png";
+    virusImage2.src = "image/virus3.png";
+
+    var gunImage = new Image();
+    gunImage.src = "image/gun.png";
+
+
+    var backgroundX = 0;
+    var backgroundY = -600;
+    var mirimeX = 500;
+    var mirimeY = 550;
+    var virusX = [50, 150, 250, 350, 450, 550, 650, 750, 850, 950];
+
+    var mirimeImages = [mirimeImage1, mirimeImage2];
+    var virusImages = [virusImage2, virusImage1];
+
+    var gunArray = [];
+    var virusArray = [];
+
+    var mirimeIndex = 0;
+    var count = 0;
+
+    var intervalId = setInterval(function(){
+      count++;
+      context.drawImage(backgroundImage, 0, backgroundX, 1000, 600);
+      context.drawImage(backgroundImage, 0, backgroundY, 1000, 600);
+
+      for(var i=0; i<gunArray.length; i++){
+        var temp = gunArray[i];
+        context.drawImage(gunImage, temp.x-30, temp.y-30, 70, 70);
+      }
+      
+      for(var i=0; i<virusArray.length; i++){
+        var temp = virusArray[i];
+        context.drawImage(virusImages[temp.type], temp.x-50, temp.y-50, 100, 100);
+      }
+
+      context.drawImage(mirimeImages[mirimeIndex], mirimeX-50, mirimeY-50, 100, 100);
+
+      CreateGun();
+      MoveGun();
+      RemoveGun();
+      CreateVirus();
+      MoveVirus();
+      RemoveVirus();
+      Shooting();
+      Die();
+      MirimeMovement();
+    }, 20);
+
+    function CreateVirus(){
+      var number = Math.random()*100;
+      var result = Math.floor(number);
+
+      if(result != 10){
+        return;
+      }
+
+      for(var i=0; i<10; i++){
+        object = {};
+        object.x = virusX[i];
+        object.y = -10;
+
+        var result = Math.floor(Math.random()*2);
+        object.type = result;
+        if(result == 0){
+          object.energy = 200;
+        }else if (result == 1){
+          object.energy = 300;
+        }
+        object.isDead = false;
+        virusArray.push(object);
+      }
+    }
+
+    function MoveVirus(){
+      for(var i=0; i<virusArray.length; i++){
+        var temp = virusArray[i];
+        temp.y = temp.y + 5;
+        if(temp.y >= 840){
+          temp.isDead = true;
+        }
+      }
+    }
+
+    function RemoveVirus(){
+      for(var i=virusArray.length-1; i>=0; i--){
+        var temp = virusArray[i]; 
+        if(temp.isDead){
+          virusArray.splice(i, 1);
+        }
+      }
+    }
+    $("#game").on("mousemove", function(e){
+      mirimeX = e.offsetX;
+    });
+
+
+    function CreateGun(){
+      if(count%10 != 0){
+        return;
+      }
+      var object = {};
+      object.x = mirimeX;
+      object.y = mirimeY;
+      object.isDead = false;
+      gunArray.push(object);
+    }
+
+    function MoveGun(){
+      for(var i=0; i<gunArray.length; i++){
+        var temp = gunArray[i];
+        temp.y = temp.y-10;
+        if(temp.y <= -40){
+          temp.isDead = true;
+        }
+      }
+    }
+
+    function RemoveGun(){
+      for(var i=gunArray.length-1; i>=0; i--){
+        var temp = gunArray[i];
+        if(temp.isDead){
+          gunArray.splice(i, 1);
+        }
+      }
+    }
+
+    function Shooting(){
+      for(var i=0; i<gunArray.length; i++){
+        var gun = gunArray[i];
+        for(var j=0; j<virusArray.length; j++){
+          var virus = virusArray[j];
+          var shooting = gun.x > virus.x-50 && gun.x < virus.x+50 && gun.y > virus.y-50 && gun.y < virus.y+50;
+          if(shooting){
+            gun.isDead = true;
+            virus.energy -= 50;
+            if(virus.energy <= 0){
+              virus.isDead = true;
+            }
+          }
+        }
+      }
+    }
+
+    function Die(){
+      for(var i=0; i<virusArray.length; i++){
+        var temp = virusArray[i];
+        var die = mirimeX > temp.x-50 && mirimeX < temp.x+50 && mirimeY > temp.y-50 && mirimeY < temp.y+50;
+        
+        if(die){
+          clearInterval(intervalId);
+          GameOver();
+        }
+      }
+    }
+
+    function MirimeMovement(){
+      if(count%8 != 0){
+        return;
+      }
+      mirimeIndex++;
+      if(mirimeIndex==2){
+        mirimeIndex = 0;
+      }
+    }
+
+    context.font = "bold 20px Arial Unicode MS";
+    context.fillStyle = "white";
+
+    function GameOver(){
+      context.drawImage(backgroundImageEnd, 0, backgroundX, 1000, 600);
+      context.drawImage(backgroundImageEnd, 0, backgroundY, 1000, 600);
+      context.fillText("Game Over", 450, 300);
+    }
+  </script>
+</body>
+</html>

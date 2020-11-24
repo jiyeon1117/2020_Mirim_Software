@@ -1,0 +1,10 @@
+@charset "UTF-8";
+
+canvas {
+  position: relative;
+  max-width: 100%;
+  border: 2px solid rgb(0, 0, 0);
+  max-height: 100%;
+  display: block;
+  margin: 0 auto;
+}
